@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private VideoAdapter adapter;
     private List<VideoModel> videoList = new ArrayList<>();
 
-    // بيانات الـ API المحددة في الواجب
+    // بيانات الـ API
     private final String API_KEY = "AIzaSyAEk7F_bbhTFUWxwJXDn5fzxviwCJYk7EY";
 
     @Override
@@ -51,22 +51,20 @@ public class MainActivity extends AppCompatActivity {
         btnSearch.setOnClickListener(v -> {
             String query = etSearch.getText().toString().trim();
             if (query.isEmpty()) {
-                // 1. معالجة حالة الإدخال الفارغ
+
                 Toast.makeText(MainActivity.this, "Please enter a search term!", Toast.LENGTH_SHORT).show();
             } else {
-                // بدء عملية الاتصال بالخلفية
+
                 new YouTubeSearchTask().execute(query);
             }
         });
     }
-
-    // كلاس الـ AsyncTask الاحترافي لعمل الاتصال بعيداً عن الواجهة الرئيسية
     private class YouTubeSearchTask extends AsyncTask<String, Void, String> {
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            progressBar.setVisibility(View.VISIBLE); // إظهار مؤشر التحميل
+            progressBar.setVisibility(View.VISIBLE);
             videoList.clear();
             adapter.notifyDataSetChanged();
         }
@@ -74,17 +72,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             String query = params[0];
-            // بناء الرابط المرفق بالواجب مع استبدال القيم
+
             String urlString = "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q="
                     + query + "&maxResults=15&key=" + API_KEY;
 
             try {
+//                 HttpURLConnection
                 URL url = new URL(urlString);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
 
                 int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) { // 200 OK
+                if (responseCode == HttpURLConnection.HTTP_OK) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String line;
@@ -92,40 +91,42 @@ public class MainActivity extends AppCompatActivity {
                         response.append(line);
                     }
                     reader.close();
-                    return response.toString(); // إرجاع نص الـ JSON
+                    return response.toString();
                 } else {
-                    return "ERROR_API_KEY"; // معالجة الـ Key الخاطئ أو خطأ السيرفر
+                    return "ERROR_API_KEY";
                 }
 
             } catch (Exception e) {
                 Log.e("YouTubeAPI", "Exception: " + e.getMessage());
-                return "ERROR_NETWORK"; // معالجة انقطاع الشبكة
+                return "ERROR_NETWORK";
             }
         }
 
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            progressBar.setVisibility(View.GONE); // إخفاء مؤشر التحميل
+            progressBar.setVisibility(View.GONE);
 
             if (result == null || result.equals("ERROR_NETWORK")) {
-                // 2. معالجة خطأ الشبكة
-                Toast.makeText(MainActivity.this, "Network failure. Check internet connection.", Toast.LENGTH_LONG).show();
+
+                Toast.makeText(MainActivity.this, " Check internet connection.", Toast.LENGTH_LONG).show();
                 return;
             }
             if (result.equals("ERROR_API_KEY")) {
-                // 3. معالجة خطأ مفتاح الـ API
+
                 Toast.makeText(MainActivity.this, "Invalid or missing API key.", Toast.LENGTH_LONG).show();
                 return;
             }
 
             try {
-                // تحليل الـ JSON المسترجع من يوتيوب
+
+//                  JSON Object
+
                 JSONObject jsonObject = new JSONObject(result);
                 JSONArray itemsArray = jsonObject.getJSONArray("items");
 
                 if (itemsArray.length() == 0) {
-                    // 4. معالجة حالة عدم وجود نتائج
+
                     Toast.makeText(MainActivity.this, "No results found for this query.", Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -139,15 +140,12 @@ public class MainActivity extends AppCompatActivity {
                     String channelTitle = snippet.getString("channelTitle");
                     String publishTime = snippet.getString("publishedAt");
 
-                    // جلب رابط الصورة عالية الجودة
                     String thumbnailUrl = snippet.getJSONObject("thumbnails")
                             .getJSONObject("high").getString("url");
 
-                    // إضافة الفيديو للمجموعة
                     videoList.add(new VideoModel(title, description, channelTitle, publishTime, thumbnailUrl));
                 }
 
-                // تحديث الـ RecyclerView لعرض البيانات فوراُ
                 adapter.notifyDataSetChanged();
 
             } catch (Exception e) {

@@ -25,20 +25,20 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     @NonNull
     @Override
     public VideoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // تم تغيير item_video إلى activity_video لأن الملف موجود بهذا الاسم ويحتوي على تصميم العنصر
+
         View view = LayoutInflater.from(context).inflate(R.layout.activity_video, parent, false);
         return new VideoViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull VideoViewHolder holder, int position) {
-        VideoModel video = videoList.get(position); // تصحيح الوصول للعنصر في القائمة
+        VideoModel video = videoList.get(position);
         holder.tvTitle.setText(video.getTitle());
         holder.tvChannel.setText(video.getChannelTitle());
         holder.tvDescription.setText(video.getDescription());
         holder.tvPublishTime.setText(video.getPublishTime());
 
-        // استخدام جلايد لعرض الصورة
+
         Glide.with(context)
                 .load(video.getThumbnailUrl())
                 .placeholder(android.R.drawable.ic_menu_gallery)
